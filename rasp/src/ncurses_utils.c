@@ -2,7 +2,7 @@
 #include <string.h>
 #include <float.h>
 
-#include "gpio_defines.h"
+#include "gpio_utils.h"
 
 WINDOW *menuWindow;
 WINDOW *menuBoxWindow;
@@ -187,39 +187,39 @@ void update_values(int count, char rooms[][100], int *room_temperature, int *roo
             int *room_button, int *openning, int *lamp)
 {
     if(lamp[0] == ON)
-        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): -- ON            ");
+        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): ------------- ON            ");
     else
-        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): -- OFF           ");
+        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): ------------- OFF           ");
 
     if(lamp[1] == ON)
-        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): -- ON            ");
+        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): --------- ON            ");
     else
-        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): -- OFF           ");
+        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): --------- OFF           ");
 
     if(openning[0] == ON)
-        mvwprintw(dataWindow, 2 , 0, "Living room presence: -- Detected           ");
+        mvwprintw(dataWindow, 2 , 0, "Living room presence: --------- Detected           ");
     else
-        mvwprintw(dataWindow, 2 , 0, "Living room presence: -- Nothing          ");
+        mvwprintw(dataWindow, 2 , 0, "Living room presence: --------- Nothing          ");
 
     if(openning[1] == ON)
-        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: -- Detected           ");
+        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: ------------- Detected           ");
     else
-        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: -- Nothing          ");
+        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: ------------- Nothing          ");
 
     if(openning[2] == ON)
-        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -- Detected           ");
+        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -------- Detected           ");
     else
-        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -- Nothing          ");
+        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -------- Nothing          ");
 
     if(openning[3] == ON)
-        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: -- Detected           ");
+        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: ------ Detected           ");
     else
-        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: -- Nothing          ");
+        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: ------ Nothing          ");
 
     if(openning[4] == ON)
-        mvwprintw(dataWindow, 6 , 0, "Living room door presence: -- Detected           ");
+        mvwprintw(dataWindow, 6 , 0, "Living room door presence: ---- Detected           ");
     else
-        mvwprintw(dataWindow, 6 , 0, "Living room door presence: -- Nothing          ");
+        mvwprintw(dataWindow, 6 , 0, "Living room door presence: ---- Nothing          ");
 
     if(openning[5] == ON)
         mvwprintw(dataWindow, 7 , 0, "Living room window presence: -- Detected           ");
@@ -228,7 +228,7 @@ void update_values(int count, char rooms[][100], int *room_temperature, int *roo
 
     int pos = 8;
     for(int i=0; i<count; ++i){
-        mvwprintw(dataWindow, pos , 0, "Room name: %s               ", rooms[i]);
+        mvwprintw(dataWindow, pos , 0, "Room name: %s (%d)              ", rooms[i], i+3);
         pos++;
         mvwprintw(dataWindow, pos , 0, "Temperature: %d oC, Humidity: %d %%        ", 
             room_temperature[i], room_humidity[i]);

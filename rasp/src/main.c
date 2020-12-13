@@ -7,9 +7,7 @@
 // #include "cJSON.h"
 
 #include "ncurses_utils.h"
-#include "tcp_client.h"
-#include "gpio_defines.h"
-#include "tcp_server.h"
+#include "gpio_utils.h"
 #include "alarm.h"
 #include "log.h"
 
@@ -22,6 +20,7 @@ void *watch_updateinterface();
 #define CLIENTID "rasp1"
 
 char mqtt_base_topic[255] = "fse2020/170068251/#";
+char mqtt_dispositivos[255] = "fse2020/170068251/dispositivos/";
 MQTTClient client;
 
 char meus_dispositivos[5][255];
@@ -140,6 +139,9 @@ int main(){
     // Init semaphore
     sem_init(&hold_screens, 0, 1);
 
+    // Init gpio
+    init_bcm();
+
     if(init_screens()){
         exit(-1);
     }
@@ -187,7 +189,7 @@ void *watch_userinput(){
             int device_id = get_device_id();
             sem_post(&hold_screens);
             if(device_id == 1 || device_id == 2){
-                //gpio _ 1
+                set_outp_device(device_id, 1);
             }else if(device_id >=3 && device_id <= 7){
                 int t_comodo = device_id-3;
                 if(strcmp(meus_comodos[t_comodo], "") == 0){
@@ -196,13 +198,17 @@ void *watch_userinput(){
                     continue;
                 }else{
                     // send to mqtt 
+                    char t_data[512];
+                    char t_topic[512];
+                    sprintf(t_topic, "%s%s", mqtt_dispositivos, meus_dispositivos[t_comodo]);
+                    sprintf(t_data, "{ \"tipo\": \"comando\0\", \"comando\": %d}", 1);
+                    publish(client, t_topic, t_data);
                 }
             }else{
                 save_in_log("Turn device on", "Failed (invalid ID)");
                 print_error("Invalid ID");
                 continue;
             }
-            // int server_return = send_message_to_server(LAMP, lamp_id, ON);
             char log_msg[50] = "";
             sprintf(log_msg, "Turn device %d on", device_id);
             save_in_log(log_msg, "Ok");  
@@ -229,6 +235,12 @@ void *watch_userinput(){
             }
             if(is_valid_input){
                 strcpy(meus_comodos[count_dispositivos], new_comodo);
+                // send to mqtt 
+                char t_data[512];
+                char t_topic[512];
+                sprintf(t_topic, "%s%s", mqtt_dispositivos, meus_dispositivos[count_dispositivos]);
+                sprintf(t_data, "{ \"tipo\": \"define_comodo\0\", \"comodo\": \"%s\0\"}", new_comodo);
+                publish(client, t_topic, t_data);
                 count_dispositivos++;
                 dispositivos_para_registrar--;
             }
