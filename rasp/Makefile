@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -lncurses -lpthread
+CFLAGS := -Wall -lncurses -lpthread -lpaho-mqtt3c
 
 SRCFILES := $(wildcard src/*.c)
 

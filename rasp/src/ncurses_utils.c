@@ -43,10 +43,10 @@ int init_screens()
     dataBoxWindow = create_newwin(LINES, COLS / 2, 0, COLS / 2, 1);
 
     print_menu();
-    print_waiting_for_client();
+    // print_waiting_for_client();
 
     print_alarm_status("# Alarm status: Deactivated            ");
-    print_air_status("# Air status: Manual                             ");
+    // print_air_status("# Air status: Manual                             ");
 
     return 0;
 }
@@ -96,25 +96,29 @@ void print_menu()
     mvwprintw(menuWindow, 0 , 0, "Option F1: exit program");
 
 
-    mvwprintw(menuWindow, 3 , 0, "Option F2: turn lamp on");
-    mvwprintw(menuWindow, 4 , 0, "Option F3: turn lamp off");
+    mvwprintw(menuWindow, 3 , 0, "Option F2: turn device on");
+    mvwprintw(menuWindow, 4 , 0, "Option F3: turn device off");
 
-    mvwprintw(menuWindow, 6 , 0, "Option F4: turn air on");
-    mvwprintw(menuWindow, 7 , 0, "Option F5: turn air off");
-
-    mvwprintw(menuWindow, 9 , 0, "Option F6: define air temperature");
-
-    mvwprintw(menuWindow, 11, 0, "Option F7: activate alarm");
-    mvwprintw(menuWindow, 12, 0, "Option F8: deactivate alarm");
+    mvwprintw(menuWindow, 11, 0, "Option F4: activate alarm");
+    mvwprintw(menuWindow, 12, 0, "Option F5: deactivate alarm");
 
     wrefresh(menuWindow);
 }
 
-void print_waiting_for_client(){
-    wclear(dataWindow);
-    mvwprintw(dataWindow, 0, 0, "Waiting for client");
-    wrefresh(dataWindow);
+void print_menu_new_device(int dispositivos_para_registrar){
+    if(dispositivos_para_registrar){
+        mvwprintw(menuWindow, 14, 0, "Option F6: register new device");
+    }else{
+        mvwprintw(menuWindow, 14, 0, "                                ");
+    }
+    wrefresh(menuWindow);
 }
+
+// void print_waiting_for_client(){
+//     wclear(dataWindow);
+//     mvwprintw(dataWindow, 0, 0, "Waiting for client");
+//     wrefresh(dataWindow);
+// }
 
 void print_error(char error[]){
     wclear(inputWindow);
@@ -143,21 +147,30 @@ float get_temperature(){
     return temperature;
 }
 
-int get_device_id(int device_type){
+void get_comodo_name(char * buff){
+    wclear(inputWindow);
+
+    echo();
+    mvwprintw(inputWindow, 0, 0, "Enter room name for new device > ");
+
+    wrefresh(inputWindow);
+    wscanw(inputWindow, "%s", buff);
+
+    wclear(inputWindow);
+    wrefresh(inputWindow);
+
+    noecho();
+}
+
+int get_device_id(){
     wclear(inputWindow);
 
     echo();
 
     int device_id = 0;
-    if(device_type == LAMP){
-        mvwprintw(inputWindow, 0, 0, "Enter lamp id > ");
-    }
-    else if(device_type == AIR){
-        mvwprintw(inputWindow, 0, 0, "Enter air id > ");
-    }
-    else{
-        return 0;
-    }
+
+    mvwprintw(inputWindow, 0, 0, "Enter device id > ");
+  
 
     wrefresh(inputWindow);
     wscanw(inputWindow, "%d", &device_id);
@@ -170,74 +183,65 @@ int get_device_id(int device_type){
     return device_id;
 }
 
-void update_values(double temperature, double humidity, int presence[], int openning[], int air[], int lamp[]){
-    if(temperature > 0.0 && temperature < 100.0)
-        mvwprintw(dataWindow, 0 , 0, "Temperature: ----------- %.2lf         ", temperature);
-    if(humidity > 0.0 && humidity < 100.0) 
-        mvwprintw(dataWindow, 1 , 0, "Humidity: -------------- %.2lf         ", humidity);
-
+void update_values(int count, char rooms[][100], int *room_temperature, int *room_humidity, int *room_led,
+            int *room_button, int *openning, int *lamp)
+{
     if(lamp[0] == ON)
-        mvwprintw(dataWindow, 3 , 0, "Kitchen lamp (id 1): --- ON            ");
+        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): -- ON            ");
     else
-        mvwprintw(dataWindow, 3 , 0, "Kitchen lamp (id 1): --- OFF           ");
-    if(lamp[1] == ON)
-        mvwprintw(dataWindow, 4 , 0, "Living room lamp (id 2): ON            ");
-    else
-        mvwprintw(dataWindow, 4 , 0, "Living room lamp (id 2): OFF           ");
-    if(lamp[2] == ON)
-        mvwprintw(dataWindow, 5 , 0, "Bedroom 1 lamp (id 3): - ON            ");
-    else
-        mvwprintw(dataWindow, 5 , 0, "Bedroom 1 lamp (id 3): - OFF           ");
-    if(lamp[3] == ON)
-        mvwprintw(dataWindow, 6 , 0, "Bedroom 2 lamp (id 4): - ON            ");
-    else
-        mvwprintw(dataWindow, 6 , 0, "Bedroom 2 lamp (id 4): - OFF           ");
-    
-    if(air[0] == ON)
-        mvwprintw(dataWindow, 8 , 0, "Bedroom 1 air (id 1): -- ON            ");
-    else
-        mvwprintw(dataWindow, 8 , 0, "Bedroom 1 air (id 1): -- OFF           ");
-    if(air[1] == ON)
-        mvwprintw(dataWindow, 9 , 0, "Bedroom 2 air (id 2): -- ON            ");
-    else
-        mvwprintw(dataWindow, 9 , 0, "Bedroom 2 air (id 2): -- OFF           ");
+        mvwprintw(dataWindow, 0 , 0, "Kitchen lamp (1): -- OFF           ");
 
-    if(presence[0] == ON)
-        mvwprintw(dataWindow, 11, 0, "Presence living room: -- Detected      ");
-    else if(presence[0] == OFF)
-        mvwprintw(dataWindow, 11, 0, "Presence living room: -- Nothing       ");
-    if(presence[1] == ON)
-        mvwprintw(dataWindow, 12, 0, "Presence kitchen: ------ Detected      ");
-    else if(presence[1] == OFF)
-        mvwprintw(dataWindow, 12, 0, "Presence kitchen: ------ Nothing       ");
+    if(lamp[1] == ON)
+        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): -- ON            ");
+    else
+        mvwprintw(dataWindow, 1 , 0, "Living room lamp (2): -- OFF           ");
 
     if(openning[0] == ON)
-        mvwprintw(dataWindow, 14, 0, "Kitchen door: ---------- Detected      ");
-    else if(openning[0] == OFF)
-        mvwprintw(dataWindow, 14, 0, "Kitchen door: ---------- Nothing       ");
+        mvwprintw(dataWindow, 2 , 0, "Living room presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 2 , 0, "Living room presence: -- Nothing          ");
+
     if(openning[1] == ON)
-        mvwprintw(dataWindow, 15, 0, "Kitchen window: -------- Detected      ");
-    else if(openning[1] == OFF)
-        mvwprintw(dataWindow, 15, 0, "Kitchen window: -------- Nothing       ");
+        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 3 , 0, "Kitchen presence: -- Nothing          ");
+
     if(openning[2] == ON)
-        mvwprintw(dataWindow, 16, 0, "Living room door: ------ Detected      ");
-    else if(openning[2] == OFF)
-        mvwprintw(dataWindow, 16, 0, "Living room door: ------ Nothing       ");
+        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 4 , 0, "Kitchen door presence: -- Nothing          ");
+
     if(openning[3] == ON)
-        mvwprintw(dataWindow, 17, 0, "Living room window: ---- Detected      ");
-    else if(openning[3] == OFF)
-        mvwprintw(dataWindow, 17, 0, "Living room window: ---- Nothing       ");
+        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 5 , 0, "Kitchen window presence: -- Nothing          ");
+
     if(openning[4] == ON)
-        mvwprintw(dataWindow, 18, 0, "Bedroom 1 window: ------ Detected      ");
-    else if(openning[4] == OFF)
-        mvwprintw(dataWindow, 18, 0, "Bedroom 1 window: ------ Nothing       ");
+        mvwprintw(dataWindow, 6 , 0, "Living room door presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 6 , 0, "Living room door presence: -- Nothing          ");
+
     if(openning[5] == ON)
-        mvwprintw(dataWindow, 19, 0, "Bedroom 2 window: ------ Detected      ");
-    else if(openning[5] == OFF)
-        mvwprintw(dataWindow, 19, 0, "Bedroom 2 window: ------ Nothing       ");
+        mvwprintw(dataWindow, 7 , 0, "Living room window presence: -- Detected           ");
+    else
+        mvwprintw(dataWindow, 7 , 0, "Living room window presence: -- Nothing          ");
+
+    int pos = 8;
+    for(int i=0; i<count; ++i){
+        mvwprintw(dataWindow, pos , 0, "Room name: %s               ", rooms[i]);
+        pos++;
+        mvwprintw(dataWindow, pos , 0, "Temperature: %d oC, Humidity: %d %%        ", 
+            room_temperature[i], room_humidity[i]);
+        pos++;
+        mvwprintw(dataWindow, pos , 0, "Lamp: %s, Presence: %s    ",
+            room_led[i] ? "ON" : "OFF",
+            room_button[i] ? "Detected" : "Nothing");
+        pos +=2;
+    }
 
     wrefresh(dataWindow);
 }
+
 
 void clear_input(){
     wclear(inputWindow);
@@ -245,7 +249,7 @@ void clear_input(){
 }
 
 void print_alarm_status(char msg[]){
-    mvwprintw(dataWindow, 22, 0, msg);
+    mvwprintw(dataWindow, 29, 0, msg);
     wrefresh(dataWindow);
 }
 

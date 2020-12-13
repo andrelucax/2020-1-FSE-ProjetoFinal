@@ -80,7 +80,7 @@ void *handle_tcp_client(int *alarm) {
 			// is_ok = 0;
 		}
 
-		update_values(temperature, humidity, presence, openning, air, lamp);
+		// update_values(temperature, humidity, presence, openning, air, lamp);
 		if(*alarm){
 			check_alarm(presence, openning);
 		}
