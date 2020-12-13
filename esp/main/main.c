@@ -21,6 +21,8 @@ int response_size = 0;
 
 int wifi_connected = 0;
 
+int button_status = 0;
+
 xSemaphoreHandle conexaoWifiSemaphore;
 xSemaphoreHandle conexaoMQTTSemaphore1;
 xSemaphoreHandle conexaoMQTTSemaphore2;
@@ -62,7 +64,13 @@ void botaoHandler(void * params){
             vTaskDelay(50 / portTICK_PERIOD_MS);
           }
 
-          mqtt_send_button();
+          if (button_status == 0){
+            button_status = 1;
+          }
+          else{
+            button_status = 0;
+          }
+          mqtt_send_button(button_status);
 
           // Habilitar novamente a interrupção
           vTaskDelay(50 / portTICK_PERIOD_MS);
