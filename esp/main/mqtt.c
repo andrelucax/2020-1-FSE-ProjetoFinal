@@ -112,10 +112,16 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
-void mqtt_send_button(){
+void mqtt_send_button(int button_status){
     char tmp[300];
     sprintf(tmp, "%s%s", comodo_mqtt_url, "estado");
-    mqtt_envia_mensagem(tmp, "{ botao: 1 }");
+
+    if(button_status == 0){
+        mqtt_envia_mensagem(tmp, "{ botao: 0 }");
+    }
+    else{
+        mqtt_envia_mensagem(tmp, "{ botao: 1 }");
+    }
 }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
@@ -125,11 +131,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_start()
 {
-    uint8_t mac;
-    esp_efuse_mac_get_default(&mac);
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
     char buffer[80];
     strcpy(buffer, mqtt_url);
-    sprintf(mqtt_url, "%s%d", buffer, mac);
+    sprintf(mqtt_url, "%s%02X%02X%02X%02X%02X%02X", buffer, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     esp_mqtt_client_config_t mqtt_config = {
         .uri = "mqtt://mqtt.eclipseprojects.io",
     };
