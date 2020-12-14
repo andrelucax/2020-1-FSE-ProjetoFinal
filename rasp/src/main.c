@@ -25,7 +25,7 @@ char mqtt_dispositivos[255] = "fse2020/170068251/dispositivos/";
 MQTTClient client;
 
 char meus_dispositivos[5][255];
-char meus_comodos[5][100]; // TODO init with ""
+char meus_comodos[5][100]; 
 
 int room_temperature[5];
 int room_humidity[5];
