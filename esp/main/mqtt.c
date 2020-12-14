@@ -50,12 +50,12 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             int res = le_valor_nvs(valor_lido);
             // strcpy(valor_lido, le_valor_nvs());
             if(!res){
-                sprintf (comodo_mqtt_url, "fse2020/<matricula>/%s/", valor_lido);
+                sprintf (comodo_mqtt_url, "fse2020/170068251/%s/", valor_lido);
                 xSemaphoreGive(conexaoMQTTSemaphore1);
                 xSemaphoreGive(conexaoMQTTSemaphore2);
             }
             else{
-                mqtt_envia_mensagem(mqtt_url, "{ init: 1 }");
+                mqtt_envia_mensagem(mqtt_url, "{ \"init\": 1 }");
             }
             msg_id = esp_mqtt_client_subscribe(client, mqtt_url, 0);
             break;
@@ -74,7 +74,8 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-            // printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            printf("DATA=%.*s\r\n", event->data_len, event->data);
             cJSON * json = cJSON_Parse (event->data);
             char opt[100];
             strcpy(opt, cJSON_GetObjectItemCaseSensitive(json, "tipo")->valuestring);
@@ -84,17 +85,17 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
                 sprintf(tmp, "%s%s", comodo_mqtt_url, "estado");
                 if (comando){
                     gpio_set_level(LED, 1);
-                    mqtt_envia_mensagem(tmp, "{ led: 1 }");
+                    mqtt_envia_mensagem(tmp, "{ \"led\": 1 }");
                 }
                 else{
                     gpio_set_level(LED, 0);
-                    mqtt_envia_mensagem(tmp, "{ led: 0 }");
+                    mqtt_envia_mensagem(tmp, "{ \"led\": 0 }");
                 }
             }
             else if(strcmp(opt, "define_comodo") == 0){
                 char comodo[100];
                 strcpy(comodo, cJSON_GetObjectItemCaseSensitive(json, "comodo")->valuestring);
-                sprintf (comodo_mqtt_url, "fse2020/<matricula>/%s/", comodo);
+                sprintf (comodo_mqtt_url, "fse2020/170068251/%s/", comodo);
                 grava_valor_nvs(comodo);
                 xSemaphoreGive(conexaoMQTTSemaphore1);
                 xSemaphoreGive(conexaoMQTTSemaphore2);
@@ -117,10 +118,10 @@ void mqtt_send_button(int button_status){
     sprintf(tmp, "%s%s", comodo_mqtt_url, "estado");
 
     if(button_status == 0){
-        mqtt_envia_mensagem(tmp, "{ botao: 0 }");
+        mqtt_envia_mensagem(tmp, "{ \"botao\": 0 }");
     }
     else{
-        mqtt_envia_mensagem(tmp, "{ botao: 1 }");
+        mqtt_envia_mensagem(tmp, "{ \"botao\": 1 }");
     }
 }
 

@@ -100,8 +100,8 @@ void trataComunicacaoComServidor(void * params)
         continue;
       }
 
-      sprintf(mensagem_temperatura, "{ temperatura: %d }", data_dht11.temperature);
-      sprintf(mensagem_umidade, "{ umidade: %d }", data_dht11.humidity);
+      sprintf(mensagem_temperatura, "{ \"temperatura\": %d }", data_dht11.temperature);
+      sprintf(mensagem_umidade, "{ \"umidade\": %d }", data_dht11.humidity);
       // sprintf(mensagem_estado, "%d", data_dht11.status);
 
       char temperatura_mqtt_url[300];
