@@ -126,7 +126,6 @@ void trataComunicacaoComServidor(void * params)
 
 void app_main(void)
 {
-  nvs_flash_erase();
   DHT11_init(GPIO_NUM_4);
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
