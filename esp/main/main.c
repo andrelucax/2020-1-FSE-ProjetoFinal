@@ -100,8 +100,8 @@ void trataComunicacaoComServidor(void * params)
         continue;
       }
 
-      sprintf(mensagem_temperatura, "{ temperatura: %d }", data_dht11.temperature);
-      sprintf(mensagem_umidade, "{ umidade: %d }", data_dht11.humidity);
+      sprintf(mensagem_temperatura, "{ \"temperatura\": %d }", data_dht11.temperature);
+      sprintf(mensagem_umidade, "{ \"umidade\": %d }", data_dht11.humidity);
       // sprintf(mensagem_estado, "%d", data_dht11.status);
 
       char temperatura_mqtt_url[300];
@@ -126,6 +126,7 @@ void trataComunicacaoComServidor(void * params)
 
 void app_main(void)
 {
+  nvs_flash_erase();
   DHT11_init(GPIO_NUM_4);
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
