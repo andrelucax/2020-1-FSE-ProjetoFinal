@@ -4,7 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <semaphore.h>
-// #include "cJSON.h"
+
+#include "cJSON.h"
 
 #include "ncurses_utils.h"
 #include "gpio_utils.h"
@@ -31,7 +32,7 @@ int room_humidity[5];
 int room_led[5];
 int room_button[5];
 
-int openning[6];
+int sensors[6];
 int lamp[2];
 
 int count_dispositivos=0;
@@ -64,6 +65,8 @@ void publish(MQTTClient client, char* topic, char* payload) {
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     // char* payload = message->payload;
 
+    // char __temp[256];
+    // sprintf(__temp, "Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload)
     // printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload);
     char temp[1024];
     char delim[2] = "/";
@@ -74,27 +77,48 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
 
     if(ptr == NULL){
         //coco
-    }else if(strcmp(ptr, "dispositivo")){
+    }else if(!strcmp(ptr, "dispositivos")){
         // cadastrando
         ptr = strtok(NULL, delim); // mac
         if(dispositivos_para_registrar == 5) return 1;
         // for dispositivos, ver se ja tem um ocm mesmo nome
-        for(int i=0; i<dispositivos_para_registrar; ++i){
+        for(int i=0; i<count_dispositivos; ++i){
             if(!strcmp(ptr, meus_dispositivos[i])){
-                return 1;
+                // return 1;
             }
         }
-        strcpy(meus_dispositivos[dispositivos_para_registrar], ptr);
-        // preciso avisar na UI que há um dispositivo pra ser cadastrado
-        dispositivos_para_registrar++;
+        cJSON * json = cJSON_Parse(message->payload);
+        int _init = 0;
+        if(cJSON_IsNumber(cJSON_GetObjectItemCaseSensitive(json, "init"))){
+            _init = cJSON_GetObjectItemCaseSensitive(json, "init")->valueint;
+            if(_init == 1){
+                strcpy(meus_dispositivos[count_dispositivos], ptr);
+                dispositivos_para_registrar++;
+            }
+        }
+        cJSON_Delete(json);
     }else{
         // já deve estar cadastrado
-        ptr = strtok(NULL, delim); // comodo
-        for(int i=0; i<5; ++i){
+        // save_in_log("DEBUG - payload", message->payload); 
+        for(int i=0; i<count_dispositivos; ++i){
             if(!strcmp(ptr, meus_comodos[i])){
-                // botão foi apertado
-                // ou temperatura[i], umidade[i]
-                // abre o Jsao
+                cJSON * json = cJSON_Parse(message->payload);
+                ptr = strtok(NULL, delim); // temperatura, umididade or estado
+                if (strcmp(ptr, "temperatura") == 0){
+                    int _temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
+                    room_temperature[i] = _temp;
+                }else if (strcmp(ptr, "umidade") == 0){
+                    int _umid = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+                    room_humidity[i] = _umid;
+                }else if (strcmp(ptr, "estado") == 0){
+                    if(cJSON_IsNumber(cJSON_GetObjectItemCaseSensitive(json, "botao"))){
+                        room_button[i] = cJSON_GetObjectItemCaseSensitive(json, "botao")->valueint;
+                    }else if(cJSON_IsNumber(cJSON_GetObjectItemCaseSensitive(json, "led"))){
+                        room_led[i] = cJSON_GetObjectItemCaseSensitive(json, "led")->valueint;
+                    }
+                }
+
+                cJSON_Delete(json);
                 break;
             }
         }
@@ -171,9 +195,12 @@ int main(){
 void *watch_updateinterface(){
     while(1){
         sem_wait(&hold_screens);
+        get_outp_device(lamp);
+        get_inpt_device(sensors);
         print_menu_new_device(dispositivos_para_registrar);
         update_values(count_dispositivos, meus_comodos, room_temperature, room_humidity, room_led,
-            room_button, openning, lamp);
+            room_button, sensors, lamp);
+        print_alarm_status("# Alarm status: Deactivated            ");
         sem_post(&hold_screens);
         // check_alarm();
         sleep(2);
@@ -201,7 +228,7 @@ void *watch_userinput(){
                     char t_data[512];
                     char t_topic[512];
                     sprintf(t_topic, "%s%s", mqtt_dispositivos, meus_dispositivos[t_comodo]);
-                    sprintf(t_data, "{ \"tipo\": \"comando\0\", \"comando\": %d}", 1);
+                    sprintf(t_data, "{ \"tipo\": \"comando\", \"comando\": %d}", 1);
                     publish(client, t_topic, t_data);
                 }
             }else{
@@ -211,6 +238,36 @@ void *watch_userinput(){
             }
             char log_msg[50] = "";
             sprintf(log_msg, "Turn device %d on", device_id);
+            save_in_log(log_msg, "Ok");  
+        }
+        else if (menuOption == KEY_F(3)){
+            // Turn lamp on
+            sem_wait(&hold_screens);
+            int device_id = get_device_id();
+            sem_post(&hold_screens);
+            if(device_id == 1 || device_id == 2){
+                set_outp_device(device_id, 0);
+            }else if(device_id >=3 && device_id <= 7){
+                int t_comodo = device_id-3;
+                if(strcmp(meus_comodos[t_comodo], "") == 0){
+                    save_in_log("Turn device off", "Failed (invalid ID)");
+                    print_error("Invalid ID");
+                    continue;
+                }else{
+                    // send to mqtt 
+                    char t_data[512];
+                    char t_topic[512];
+                    sprintf(t_topic, "%s%s", mqtt_dispositivos, meus_dispositivos[t_comodo]);
+                    sprintf(t_data, "{ \"tipo\": \"comando\", \"comando\": %d}", 0);
+                    publish(client, t_topic, t_data);
+                }
+            }else{
+                save_in_log("Turn device off", "Failed (invalid ID)");
+                print_error("Invalid ID");
+                continue;
+            }
+            char log_msg[50] = "";
+            sprintf(log_msg, "Turn device %d off", device_id);
             save_in_log(log_msg, "Ok");  
         }
         else if(menuOption == KEY_F(6)){
@@ -239,7 +296,7 @@ void *watch_userinput(){
                 char t_data[512];
                 char t_topic[512];
                 sprintf(t_topic, "%s%s", mqtt_dispositivos, meus_dispositivos[count_dispositivos]);
-                sprintf(t_data, "{ \"tipo\": \"define_comodo\0\", \"comodo\": \"%s\0\"}", new_comodo);
+                sprintf(t_data, "{ \"tipo\": \"define_comodo\", \"comodo\": \"%s\"}", new_comodo);
                 publish(client, t_topic, t_data);
                 count_dispositivos++;
                 dispositivos_para_registrar--;

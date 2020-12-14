@@ -99,17 +99,17 @@ void print_menu()
     mvwprintw(menuWindow, 3 , 0, "Option F2: turn device on");
     mvwprintw(menuWindow, 4 , 0, "Option F3: turn device off");
 
-    mvwprintw(menuWindow, 11, 0, "Option F4: activate alarm");
-    mvwprintw(menuWindow, 12, 0, "Option F5: deactivate alarm");
+    mvwprintw(menuWindow, 6, 0, "Option F4: activate alarm");
+    mvwprintw(menuWindow, 7, 0, "Option F5: deactivate alarm");
 
     wrefresh(menuWindow);
 }
 
 void print_menu_new_device(int dispositivos_para_registrar){
     if(dispositivos_para_registrar){
-        mvwprintw(menuWindow, 14, 0, "Option F6: register new device");
+        mvwprintw(menuWindow, 9, 0, "Option F6: register new device");
     }else{
-        mvwprintw(menuWindow, 14, 0, "                                ");
+        mvwprintw(menuWindow, 9, 0, "                                ");
     }
     wrefresh(menuWindow);
 }
@@ -228,12 +228,12 @@ void update_values(int count, char rooms[][100], int *room_temperature, int *roo
 
     int pos = 8;
     for(int i=0; i<count; ++i){
-        mvwprintw(dataWindow, pos , 0, "Room name: %s (%d)              ", rooms[i], i+3);
+        mvwprintw(dataWindow, pos , 0, "Room name: %s (%d) {              ", rooms[i], i+3);
         pos++;
-        mvwprintw(dataWindow, pos , 0, "Temperature: %d oC, Humidity: %d %%        ", 
+        mvwprintw(dataWindow, pos , 0, "  Temperature: %d oC, Humidity: %d %%        ", 
             room_temperature[i], room_humidity[i]);
         pos++;
-        mvwprintw(dataWindow, pos , 0, "Lamp: %s, Presence: %s    ",
+        mvwprintw(dataWindow, pos , 0, "  Lamp: %s, Presence: %s    \n}",
             room_led[i] ? "ON" : "OFF",
             room_button[i] ? "Detected" : "Nothing");
         pos +=2;
