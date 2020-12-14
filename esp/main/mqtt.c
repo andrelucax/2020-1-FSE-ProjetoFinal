@@ -75,7 +75,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            printf("DATA=%.*s\r\n", event->topic_len, event->data);
+            printf("DATA=%.*s\r\n", event->data_len, event->data);
             cJSON * json = cJSON_Parse (event->data);
             char opt[100];
             strcpy(opt, cJSON_GetObjectItemCaseSensitive(json, "tipo")->valuestring);
