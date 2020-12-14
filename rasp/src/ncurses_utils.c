@@ -230,7 +230,7 @@ void update_values(int count, char rooms[][100], int *room_temperature, int *roo
     for(int i=0; i<count; ++i){
         mvwprintw(dataWindow, pos , 0, "Room name: %s (%d) {              ", rooms[i], i+3);
         pos++;
-        mvwprintw(dataWindow, pos , 0, "  Temperature: %d oC, Humidity: %d %%        ", 
+        mvwprintw(dataWindow, pos , 0, "  Temperature: %d oC, Humility: %d %%        ", 
             room_temperature[i], room_humidity[i]);
         pos++;
         mvwprintw(dataWindow, pos , 0, "  Lamp: %s, Presence: %s    \n}",
@@ -249,7 +249,7 @@ void clear_input(){
 }
 
 void print_alarm_status(char msg[]){
-    mvwprintw(dataWindow, 29, 0, msg);
+    mvwprintw(dataWindow, 28, 0, msg);
     wrefresh(dataWindow);
 }
 

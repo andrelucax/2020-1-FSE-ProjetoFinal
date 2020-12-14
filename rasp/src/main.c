@@ -41,9 +41,9 @@ int dispositivos_para_registrar=0;
 
 pthread_t thread_userinput;
 pthread_t thread_updateinterface;
+pthread_t thread_alarm;
 
 sem_t hold_screens;
-// pthread_t thread_alarm;
 
 int alarm_status = 0;
 
@@ -84,7 +84,7 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
         // for dispositivos, ver se ja tem um ocm mesmo nome
         for(int i=0; i<count_dispositivos; ++i){
             if(!strcmp(ptr, meus_dispositivos[i])){
-                // return 1;
+                return 1;
             }
         }
         cJSON * json = cJSON_Parse(message->payload);
@@ -178,14 +178,15 @@ int main(){
         exit(-3);
     }
 
-    // if (pthread_create(&thread_alarm, NULL, handle_alarm, NULL))
-    // {
-    //     exit(-4);
-    // }
+    if (pthread_create(&thread_alarm, NULL, handle_alarm, NULL))
+    {
+        exit(-4);
+    }
 
     pthread_join(thread_userinput, NULL);
 
-    // pthread_cancel(thread_alarm);
+    pthread_cancel(thread_alarm);
+    pthread_cancel(thread_updateinterface);
 
     finish_screens();
 
@@ -200,10 +201,14 @@ void *watch_updateinterface(){
         print_menu_new_device(dispositivos_para_registrar);
         update_values(count_dispositivos, meus_comodos, room_temperature, room_humidity, room_led,
             room_button, sensors, lamp);
-        print_alarm_status("# Alarm status: Deactivated            ");
+        check_alarm(sensors, room_button, count_dispositivos);
+        if(alarm_status){
+            print_alarm_status("# Alarm status: Activated              ");
+        }else{
+            print_alarm_status("# Alarm status: Deactivated            ");
+        }
         sem_post(&hold_screens);
-        // check_alarm();
-        sleep(2);
+        sleep(1);
     }
 }
 
@@ -214,7 +219,6 @@ void *watch_userinput(){
             // Turn lamp on
             sem_wait(&hold_screens);
             int device_id = get_device_id();
-            sem_post(&hold_screens);
             if(device_id == 1 || device_id == 2){
                 set_outp_device(device_id, 1);
             }else if(device_id >=3 && device_id <= 7){
@@ -222,6 +226,7 @@ void *watch_userinput(){
                 if(strcmp(meus_comodos[t_comodo], "") == 0){
                     save_in_log("Turn device on", "Failed (invalid ID)");
                     print_error("Invalid ID");
+                    sem_post(&hold_screens);
                     continue;
                 }else{
                     // send to mqtt 
@@ -234,17 +239,18 @@ void *watch_userinput(){
             }else{
                 save_in_log("Turn device on", "Failed (invalid ID)");
                 print_error("Invalid ID");
+                sem_post(&hold_screens);
                 continue;
             }
             char log_msg[50] = "";
             sprintf(log_msg, "Turn device %d on", device_id);
-            save_in_log(log_msg, "Ok");  
+            save_in_log(log_msg, "Ok"); 
+            sem_post(&hold_screens);
         }
         else if (menuOption == KEY_F(3)){
             // Turn lamp on
             sem_wait(&hold_screens);
             int device_id = get_device_id();
-            sem_post(&hold_screens);
             if(device_id == 1 || device_id == 2){
                 set_outp_device(device_id, 0);
             }else if(device_id >=3 && device_id <= 7){
@@ -252,6 +258,7 @@ void *watch_userinput(){
                 if(strcmp(meus_comodos[t_comodo], "") == 0){
                     save_in_log("Turn device off", "Failed (invalid ID)");
                     print_error("Invalid ID");
+                    sem_post(&hold_screens);
                     continue;
                 }else{
                     // send to mqtt 
@@ -264,18 +271,27 @@ void *watch_userinput(){
             }else{
                 save_in_log("Turn device off", "Failed (invalid ID)");
                 print_error("Invalid ID");
+                sem_post(&hold_screens);
                 continue;
             }
             char log_msg[50] = "";
             sprintf(log_msg, "Turn device %d off", device_id);
-            save_in_log(log_msg, "Ok");  
+            save_in_log(log_msg, "Ok");
+            sem_post(&hold_screens);
+        }
+        else if (menuOption == KEY_F(4)){
+            alarm_status = 1;
+            save_in_log("Turn alarm on", "Ok");
+        }
+        else if (menuOption == KEY_F(5)){
+            alarm_status = 0;
+            save_in_log("Turn alarm off", "Ok");
         }
         else if(menuOption == KEY_F(6)){
             if(!dispositivos_para_registrar) continue;
             char new_comodo[100];
             sem_wait(&hold_screens);
             get_comodo_name(new_comodo);
-            sem_post(&hold_screens);
             int is_valid_input=1;
             if(strlen(new_comodo) < 3){
                 save_in_log("Register new device", "Failed (Invalid room name: too short)");
@@ -301,19 +317,8 @@ void *watch_userinput(){
                 count_dispositivos++;
                 dispositivos_para_registrar--;
             }
+            sem_post(&hold_screens);
         }
-    //     else if (menuOption == KEY_F(7)){
-    //         alarm_status = 1;
-    //         clear_input();
-    //         print_alarm_status("# Alarm status: Activated              ");
-    //         save_in_log("Turn alarm on", "Ok");
-    //     }
-    //     else if (menuOption == KEY_F(8)){
-    //         alarm_status = 0;
-    //         clear_input();
-    //         print_alarm_status("# Alarm status: Deactivated            ");
-    //         save_in_log("Turn alarm off", "Ok");
-    //     }
     }
     save_in_log("Exit app", "Ok");
 
